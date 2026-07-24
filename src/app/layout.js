@@ -1,14 +1,20 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { EB_Garamond, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { GameProvider } from "../../public/context/GameContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const eb_garamond = EB_Garamond({
   subsets: ["latin"],
+  variable: "--font-garamond",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+export const hankenGrotesk = Hanken_Grotesk({
   subsets: ["latin"],
+  variable: "--font-hanken",
+});
+
+export const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata = {
@@ -20,9 +26,13 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${eb_garamond.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} h-screen w-screen bg-background`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="w-full h-full">
+        <div>
+          <GameProvider>{children}</GameProvider>
+        </div>
+      </body>
     </html>
   );
 }
