@@ -9,10 +9,14 @@ export const GameContext = createContext(null);
 
 export function GameProvider({ children }) {
   const [connected, setConnected] = useState(false);
+  const [battleRoom, setBattleRoom] = useState(null);
+  const [battleStatus, setBattleStatus] = useState("SEARCHING");
   const [player, setPlayer] = useState(-1);
   const [mode, setMode] = useState("1v1");
 
   const stompClient = useRef(null);
+
+  const playerSubscriptionRef = useRef(null);
 
   const wakeServer = async () => {
     try {
@@ -43,18 +47,45 @@ export function GameProvider({ children }) {
     stompClient.current = client;
   };
 
+  const subscribeToPlayer = () => {
+    if (!stompClient.current) return;
+
+    playerSubscriptionRef.current?.unsubscribe();
+
+    playerSubscriptionRef.current = stompClient.current.subscribe(
+      `/topic/player/${player}`,
+      (message) => {
+        const data = JSON.parse(message.body);
+        if (data?.status) {
+          setBattleStatus(data?.status);
+        }
+        if (data?.battleRoom) {
+          setBattleRoom(data?.battleRoom);
+        }
+      }
+    )
+  }
+
   const battleRandom = () => {
-    console.log("battle");
-    console.log("stomp client: ", stompClient);
 
     if (!player || !stompClient.current) return;
-    console.log("Battle");
 
-    stompClient.current.publish({
-      destination: "/app/battle",
-      body: JSON.stringify({ playerId: player, mode }),
-    });
+    publishMessage("/battle", { playerId: player, mode })
+    subscribeToPlayer();
   };
+
+  const publishMessage = (topic, body) => {
+    stompClient.current.publish({
+      destination: "/app" + topic,
+      body: JSON.stringify(body),
+    });
+  }
+
+  const rollDice = () => {
+    if (!stompClient.current || !player || !battleRoom) return;
+
+    publishMessage("/roll-dice", { playerId: player, roomId: battleRoom?.roomId });
+  }
 
   useEffect(() => {
     const init = async () => {
@@ -79,6 +110,9 @@ export function GameProvider({ children }) {
       player,
       setPlayer,
       setMode,
+      battleRoom,
+      battleStatus,
+      rollDice
     },
     children,
   });

@@ -1,9 +1,11 @@
 "use client";
 import React from "react";
 import { useGame } from "../hooks/useGame";
+import { useRouter } from "next/navigation";
 
 const BattleMenuPage = () => {
   const { battleRandom, setMode } = useGame();
+  const router = useRouter();
   const playerModes = [
     {
       mode: "1v1",
@@ -34,6 +36,7 @@ const BattleMenuPage = () => {
         console.log("Battle random");
         setMode(mode);
         battleRandom();
+        router.push('/battle');
         break;
       default:
         break;
