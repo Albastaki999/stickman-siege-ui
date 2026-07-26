@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${eb_garamond.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} h-screen w-screen bg-background`}
+      className={`${eb_garamond.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable} h-screen w-screen bg-background select-none`}
     >
       <body className="w-full h-full">
         <div>

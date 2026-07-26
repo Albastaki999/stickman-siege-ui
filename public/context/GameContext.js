@@ -11,7 +11,7 @@ export function GameProvider({ children }) {
   const [connected, setConnected] = useState(false);
   const [battleRoom, setBattleRoom] = useState(null);
   const [battleStatus, setBattleStatus] = useState("SEARCHING");
-  const [player, setPlayer] = useState(-1);
+  const [player, setPlayer] = useState(1);
   const [mode, setMode] = useState("1v1");
 
   const stompClient = useRef(null);
@@ -87,6 +87,11 @@ export function GameProvider({ children }) {
     publishMessage("/roll-dice", { playerId: player, roomId: battleRoom?.roomId });
   }
 
+  const attackNumber = (attackedNumber, attackedPlayer) => {
+    if (!stompClient.current || !player || !battleRoom) return;
+    publishMessage("/attack-num", { attackedNumber, attackedPlayer, attackingNumber: battleRoom?.dice - 1, attackingPlayer: player, roomId: battleRoom?.roomId });
+  }
+
   useEffect(() => {
     const init = async () => {
       await wakeServer();
@@ -112,7 +117,8 @@ export function GameProvider({ children }) {
       setMode,
       battleRoom,
       battleStatus,
-      rollDice
+      rollDice,
+      attackNumber
     },
     children,
   });
