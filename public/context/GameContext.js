@@ -10,7 +10,7 @@ export const GameContext = createContext(null);
 export function GameProvider({ children }) {
   const [connected, setConnected] = useState(false);
   const [battleRoom, setBattleRoom] = useState(null);
-  const [battleStatus, setBattleStatus] = useState("SEARCHING");
+  const [battleStatus, setBattleStatus] = useState("NONE");
   const [player, setPlayer] = useState(1);
   const [mode, setMode] = useState("1v1");
 
@@ -37,6 +37,7 @@ export function GameProvider({ children }) {
       onConnect: () => {
         console.log("connected");
         setConnected(true);
+        retrieveLocalStorage();
       },
 
       onStompError: () => setConnected(false),
@@ -47,7 +48,7 @@ export function GameProvider({ children }) {
     stompClient.current = client;
   };
 
-  const subscribeToPlayer = () => {
+  const subscribeToPlayer = (player) => {
     if (!stompClient.current) return;
 
     playerSubscriptionRef.current?.unsubscribe();
@@ -58,20 +59,35 @@ export function GameProvider({ children }) {
         const data = JSON.parse(message.body);
         if (data?.status) {
           setBattleStatus(data?.status);
+          sessionStorage.setItem("battleStatus", data?.status);
         }
         if (data?.battleRoom) {
           setBattleRoom(data?.battleRoom);
+          sessionStorage.setItem(
+            "battleRoom",
+            JSON.stringify(data?.battleRoom),
+          );
         }
-      }
-    )
-  }
+        sessionStorage.setItem("player", player);
+        sessionStorage.setItem("mode", mode);
+      },
+    );
+  };
+
+  const retrieveLocalStorage = () => {
+    setBattleRoom(JSON.parse(sessionStorage.getItem("battleRoom")));
+    setBattleStatus(sessionStorage.getItem("battleStatus") ?? "SEARCHING");
+    setPlayer(sessionStorage.getItem("player") ?? 1);
+    setMode(sessionStorage.getItem("mode") ?? "1v1");
+
+    subscribeToPlayer(sessionStorage.getItem("player") ?? 1);
+  };
 
   const battleRandom = () => {
-
     if (!player || !stompClient.current) return;
 
-    publishMessage("/battle", { playerId: player, mode })
-    subscribeToPlayer();
+    publishMessage("/battle", { playerId: player, mode });
+    subscribeToPlayer(player);
   };
 
   const publishMessage = (topic, body) => {
@@ -79,18 +95,27 @@ export function GameProvider({ children }) {
       destination: "/app" + topic,
       body: JSON.stringify(body),
     });
-  }
+  };
 
   const rollDice = () => {
     if (!stompClient.current || !player || !battleRoom) return;
 
-    publishMessage("/roll-dice", { playerId: player, roomId: battleRoom?.roomId });
-  }
+    publishMessage("/roll-dice", {
+      playerId: player,
+      roomId: battleRoom?.roomId,
+    });
+  };
 
   const attackNumber = (attackedNumber, attackedPlayer) => {
     if (!stompClient.current || !player || !battleRoom) return;
-    publishMessage("/attack-num", { attackedNumber, attackedPlayer, attackingNumber: battleRoom?.dice - 1, attackingPlayer: player, roomId: battleRoom?.roomId });
-  }
+    publishMessage("/attack-num", {
+      attackedNumber,
+      attackedPlayer,
+      attackingNumber: battleRoom?.dice - 1,
+      attackingPlayer: player,
+      roomId: battleRoom?.roomId,
+    });
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -118,7 +143,7 @@ export function GameProvider({ children }) {
       battleRoom,
       battleStatus,
       rollDice,
-      attackNumber
+      attackNumber,
     },
     children,
   });

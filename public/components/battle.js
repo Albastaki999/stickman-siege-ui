@@ -1,5 +1,5 @@
 'use client'
-import React, { useReducer } from 'react'
+import React from 'react'
 import { useGame } from '../hooks/useGame'
 import { useRouter } from 'next/navigation';
 
@@ -11,10 +11,6 @@ const Battle = () => {
   const turn = battleRoom?.turn;
   const dice = battleRoom?.dice;
   const canAttack = battleRoom?.players?.[turn]?.canAttack;
-
-  if (!battleRoom && battleStatus != "SEARCHING") {
-    router.push("/");
-  }
 
   const canRoll = (players?.[turn].playerId == player) && !canAttack;
 
